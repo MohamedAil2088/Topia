@@ -1,6 +1,6 @@
 [build]
   base = "mens-ecommerce/frontend"
-  command = "npm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
   publish = "dist"
 
 [[redirects]]
@@ -10,3 +10,4 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_FLAGS = "--legacy-peer-deps"
