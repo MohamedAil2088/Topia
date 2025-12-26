@@ -7,28 +7,36 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 
+// إنشاء تطبيق Express
+const app = express();
+
 // تحميل متغيرات البيئة
 dotenv.config();
 
 const connectDB = require('./config/database');
 
-// الاتصال بقاعدة البيانات
-connectDB();
-
 // Sentry Init
 const { initSentry, Sentry } = require('./utils/sentry');
 initSentry();
+
+// Sentry Request Handler (Must be the first middleware)
+Sentry.setupExpressErrorHandler(app);
+
+// الاتصال بقاعدة البيانات (Ensure DB is connected for every request)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database Connection Failed:", error);
+    res.status(500).json({ error: "Database Connection Failed" });
+  }
+});
 
 // استيراد Routes
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
-
-// إنشاء تطبيق Express
-const app = express();
-
-// Sentry Request Handler (Must be the first middleware)
-Sentry.setupExpressErrorHandler(app);
 
 const { Server } = require("socket.io");
 const http = require('http');
