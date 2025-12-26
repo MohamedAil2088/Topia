@@ -6,14 +6,18 @@ let etherealAccount = null;
 const sendEmail = async (options) => {
     let transporter;
 
-    // Check if SMTP vars are set, otherwise use Ethereal (Test)
-    if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
+    // Check if SMTP vars are set (support multiple naming conventions)
+    const emailUser = process.env.SMTP_EMAIL || process.env.EMAIL_USER;
+    const emailPass = process.env.SMTP_PASSWORD || process.env.EMAIL_APP_PASSWORD || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
+    const emailService = process.env.SMTP_SERVICE || process.env.EMAIL_SERVICE || 'gmail';
+
+    if (emailUser && emailPass) {
         try {
             transporter = nodemailer.createTransport({
-                service: process.env.SMTP_SERVICE || 'gmail',
+                service: emailService,
                 auth: {
-                    user: process.env.SMTP_EMAIL,
-                    pass: process.env.SMTP_PASSWORD
+                    user: emailUser,
+                    pass: emailPass
                 }
             });
         } catch (error) {

@@ -8,10 +8,11 @@ const Order = require('./models/Order');
 const connectDB = require('./config/database');
 
 dotenv.config();
-connectDB();
 
 const importData = async () => {
     try {
+        await connectDB();
+
         await Product.deleteMany();
         await Category.deleteMany();
         // await User.deleteMany(); // Keep users (admin)
@@ -64,6 +65,7 @@ const importData = async () => {
                 stock: 50,
                 sizes: ['S', 'M', 'L', 'XL'],
                 colors: ['White'],
+                isCustomizable: true,
             },
             {
                 name: 'Navy Slim Fit Chinos',
@@ -119,6 +121,7 @@ const importData = async () => {
                 stock: 40,
                 sizes: ['M', 'L'],
                 colors: ['Striped'],
+                isCustomizable: true,
             },
             {
                 name: 'Dark Wash Slim Jeans',
@@ -163,6 +166,7 @@ const importData = async () => {
 
 const destroyData = async () => {
     try {
+        await connectDB();
         await Product.deleteMany();
         await Category.deleteMany();
         // await User.deleteMany();

@@ -30,22 +30,35 @@ exports.register = async (req, res) => {
         });
 
         if (user) {
-            // Send Welcome Email
+            // Generate Verification Code (6 digits)
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Save code to user (hashed)
+            user.resetPasswordToken = crypto.createHash('sha256').update(verificationCode).digest('hex');
+            user.resetPasswordExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours for initial verification
+            user.isVerified = false; // Ensure not verified yet
+            await user.save({ validateBeforeSave: false });
+
+            // Send Verification Email
             try {
                 await sendEmail({
                     email: user.email,
-                    subject: 'Welcome to Topia Store! 🎉',
+                    subject: 'Verify Your Topia Account 🔒',
                     message: `
-                        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                            <h1 style="color: #4F46E5;">Welcome, ${user.name}!</h1>
-                            <p>Thank you for joining <strong>Topia Mens Ecommerce</strong>.</p>
-                            <p>We are thrilled to have you on board. Start shopping now for the best men's fashion.</p>
+                        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                            <h2 style="color: #4F46E5; text-align: center;">Welcome to Topia!</h2>
+                            <p style="font-size: 16px;">Please use the following code to verify your account:</p>
+                            <div style="background-color: #f3f4f6; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                                <h1 style="color: #111827; letter-spacing: 5px; margin: 0;">${verificationCode}</h1>
+                            </div>
+                            <p style="color: #6b7280; font-size: 14px; text-align: center;">This code will expire in 24 hours.</p>
                             <p>Best Regards,<br/>Topia Team</p>
                         </div>
                     `
                 });
             } catch (err) {
-                console.error('Welcome Email Error:', err);
+                console.error('Verification Email Error:', err);
+                // We don't fail the registration if email fails, but user might need to resend
             }
 
             res.status(201).json({
@@ -53,11 +66,12 @@ exports.register = async (req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role,  // إضافة role
+                role: user.role,
                 isAdmin: user.role === 'admin',
                 points: user.points || 0,
                 tier: user.tier || 'Bronze',
-                token: generateToken(user._id)
+                token: generateToken(user._id),
+                isVerified: false // Flag for frontend to redirect to verification
             });
         } else {
             res.status(400).json({ success: false, message: 'بيانات المستخدم غير صحيحة' });
