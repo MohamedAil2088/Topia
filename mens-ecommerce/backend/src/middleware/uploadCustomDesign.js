@@ -3,9 +3,23 @@ const path = require('path');
 const fs = require('fs');
 
 // إنشاء مجلد uploads إذا لم يكن موجوداً
-const uploadDir = 'uploads/custom-designs';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+// إنشاء مجلد uploads إذا لم يكن موجوداً
+let uploadDir = 'uploads/custom-designs';
+
+try {
+    if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
+} catch (error) {
+    console.log("⚠️ Upload directory creation failed (likely read-only fs), falling back to /tmp");
+    uploadDir = '/tmp/custom-designs';
+    try {
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+    } catch (e) {
+        console.error("❌ Could not create /tmp upload dir:", e);
+    }
 }
 
 // إعداد التخزين

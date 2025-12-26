@@ -3,9 +3,23 @@ const path = require('path');
 const fs = require('fs');
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, '../../uploads/designs');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+// Create uploads directory if it doesn't exist
+let uploadsDir = path.join(__dirname, '../../uploads/designs');
+
+try {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+} catch (error) {
+    console.log("⚠️ Upload directory creation failed (likely read-only fs), falling back to /tmp");
+    uploadsDir = '/tmp/uploads/designs';
+    try {
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+    } catch (e) {
+        console.error("❌ Could not create /tmp upload dir:", e);
+    }
 }
 
 // Storage configuration
