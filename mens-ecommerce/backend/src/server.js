@@ -153,10 +153,10 @@ app.use(errorHandler);
 // تشغيل السيرفر
 const PORT = process.env.PORT || 5000;
 
-// Export for Vercel
+// Export the Express API for Vercel
 module.exports = app;
 
-// Start Server locally (or if explicitly run with node)
+// Only listen if running locally (not on Vercel)
 if (require.main === module) {
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${PORT}`);
