@@ -4,8 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  // base: '/Topia/',  // Only for GitHub Pages - disabled for now
-  base: '/',
+  base: '/Topia/',  // GitHub Pages base path
   plugins: [react()],
   test: {
     globals: true,
