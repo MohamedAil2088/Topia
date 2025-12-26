@@ -153,11 +153,14 @@ app.use(errorHandler);
 // تشغيل السيرفر
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 URL: http://localhost:${PORT} (IPv4/IPv6 accessible)`);
-});
-
-// Export app for Vercel (just in case)
+// Export app for Vercel
 module.exports = app;
+
+// Only listen if running locally (node src/server.js)
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 URL: http://localhost:${PORT} (IPv4/IPv6 accessible)`);
+  });
+}
