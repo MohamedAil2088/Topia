@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Topia/',  // GitHub Pages base path
+  base: '/',  // Vercel deployment
   plugins: [react()],
   test: {
     globals: true,
