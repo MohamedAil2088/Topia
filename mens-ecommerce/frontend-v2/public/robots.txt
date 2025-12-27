@@ -1,0 +1,23 @@
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://topia-store-two.vercel.app/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 10
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /cart
+Disallow: /checkout
+
+# Allow important pages
+Allow: /
+Allow: /shop
+Allow: /new-arrivals
+Allow: /about
+Allow: /contact
+Allow: /designs
