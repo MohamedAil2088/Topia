@@ -44,7 +44,14 @@ const http = require('http');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "https://topia-mens.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
+      "https://topia-mens.vercel.app",
+      "https://topia-store-two.vercel.app",
+      /^https:\/\/topia-store-.*\.vercel\.app$/
+    ],
     methods: ["GET", "POST"]
   }
 });
@@ -61,7 +68,14 @@ app.get('/test-early', (req, res) => res.send('Early test works'));
 // 🛡️ CORS - MUST BE FIRST!
 // =======================
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "https://topia-mens.vercel.app"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "https://topia-mens.vercel.app",
+    "https://topia-store-two.vercel.app",
+    /^https:\/\/topia-store-.*\.vercel\.app$/
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
