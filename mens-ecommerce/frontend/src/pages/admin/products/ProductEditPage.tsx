@@ -7,11 +7,15 @@ import Button from '../../../components/Button';
 import Loader from '../../../components/Loader';
 import { FiUploadCloud, FiX, FiSave, FiArrowLeft, FiPackage, FiDollarSign, FiImage, FiEdit3 } from 'react-icons/fi';
 import api from '../../../utils/api';
+import { getLocalizedName } from '../../../utils/getLocalizedName';
+import { getImageUrl } from '../../../utils/imageUtils';
 
 const ProductEditPage = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+
+
 
     // State for form
     const [name, setName] = useState('');
@@ -66,7 +70,7 @@ const ProductEditPage = () => {
 
     useEffect(() => {
         if (isEditMode && product) {
-            setName(product.name);
+            setName(getLocalizedName(product.name));
             setPrice(product.price.toString());
             setDescription(product.description);
             const catId = typeof product.category === 'object' ? (product.category as any)._id : product.category;
@@ -299,7 +303,7 @@ const ProductEditPage = () => {
                                 <option value="">Select Category</option>
                                 {categories.map((cat) => (
                                     <option key={cat._id} value={cat._id}>
-                                        {cat.name}
+                                        {getLocalizedName(cat.name)}
                                     </option>
                                 ))}
                             </select>
@@ -432,8 +436,8 @@ const ProductEditPage = () => {
                                 type="button"
                                 onClick={() => toggleSize(size)}
                                 className={`px-6 py-3 rounded-xl font-black text-sm transition-all transform hover:scale-105 border-2 ${sizes.includes(size)
-                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400'
                                     }`}
                             >
                                 {size}
@@ -465,20 +469,20 @@ const ProductEditPage = () => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                         {availableColors.map((color) => (
                             <button
-                                key={color.name}
+                                key={getLocalizedName(color.name)}
                                 type="button"
-                                onClick={() => toggleColor(color.name)}
-                                className={`group relative p-4 rounded-xl transition-all transform hover:scale-105 border-3 ${colors.includes(color.name)
-                                        ? 'border-pink-600 shadow-xl ring-4 ring-pink-100'
-                                        : 'border-gray-200 hover:border-pink-300'
+                                onClick={() => toggleColor(String(getLocalizedName(color.name)))}
+                                className={`group relative p-4 rounded-xl transition-all transform hover:scale-105 border-3 ${colors.includes(String(getLocalizedName(color.name)))
+                                    ? 'border-pink-600 shadow-xl ring-4 ring-pink-100'
+                                    : 'border-gray-200 hover:border-pink-300'
                                     }`}
                             >
                                 <div
                                     className="w-full aspect-square rounded-lg mb-2 shadow-md"
                                     style={{ backgroundColor: color.value }}
                                 />
-                                <p className="text-xs font-black text-gray-700 text-center">{color.name}</p>
-                                {colors.includes(color.name) && (
+                                <p className="text-xs font-black text-gray-700 text-center">{getLocalizedName(color.name)}</p>
+                                {colors.includes(String(getLocalizedName(color.name))) && (
                                     <div className="absolute top-2 right-2 bg-pink-600 text-white rounded-full p-1 shadow-lg">
                                         <FiX size={12} />
                                     </div>
@@ -540,7 +544,7 @@ const ProductEditPage = () => {
                                     className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border-3 border-gray-200 group hover:border-primary-500 transition-all shadow-sm hover:shadow-lg"
                                 >
                                     <img
-                                        src={img}
+                                        src={getImageUrl(img)}
                                         alt={`Product ${idx + 1}`}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                     />

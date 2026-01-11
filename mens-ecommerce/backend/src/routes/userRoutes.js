@@ -3,6 +3,7 @@ const router = express.Router();
 const {
     getUserProfile,
     updateUserProfile,
+    changePassword,
     getUsers,
     getUserById,
     updateUser,
@@ -46,6 +47,10 @@ router.route('/address/:addressId')
 router.route('/preferences')
     .get(protect, getUserPreferences)
     .put(protect, updateUserPreferences);
+
+// Change Password Route (MUST be before /:id route)
+router.route('/password')
+    .put(protect, changePassword);
 
 // Admin Routes (Get All Users)
 router.route('/')

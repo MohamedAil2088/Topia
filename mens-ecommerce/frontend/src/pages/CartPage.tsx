@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { removeFromCart, updateQuantity } from '../redux/slices/cartSlice';
 import Button from '../components/Button';
-import { FiTrash2, FiMinus, FiPlus, FiArrowLeft, FiTag, FiCheckCircle, FiXCircle, FiTruck, FiLock } from 'react-icons/fi';
+import { FiTrash2, FiArrowLeft, FiTag, FiCheckCircle, FiXCircle, FiTruck, FiLock } from 'react-icons/fi';
+import { useCurrency } from '../context/CurrencyContext';
 import api from '../utils/api';
 import Swal from 'sweetalert2';
+import { getLocalizedName } from '../utils/getLocalizedName';
+import { getImageUrl } from '../utils/imageUtils';
 
 const CartPage = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
 
     const { items, totalItems, totalPrice } = useAppSelector((state: any) => state.cart);
     const { userInfo } = useAppSelector((state: any) => state.auth);
@@ -60,13 +66,13 @@ const CartPage = () => {
             })
             Toast.fire({
                 icon: 'success',
-                title: 'Coupon Applied Successfully! 🎉'
+                title: t('cart.couponSuccess')
             });
         } catch (error: any) {
             Swal.fire({
                 icon: 'error',
-                title: 'Invalid Coupon',
-                text: error.response?.data?.message || 'The coupon code you entered is invalid.',
+                title: t('cart.invalidCoupon'),
+                text: error.response?.data?.message || t('cart.invalidCouponText'),
                 confirmButtonColor: '#000'
             });
             setCouponData(null);
@@ -84,12 +90,12 @@ const CartPage = () => {
         if (!userInfo) {
             Swal.fire({
                 icon: 'info',
-                title: 'Sign In Required',
-                text: 'Please sign in to proceed to checkout.',
-                confirmButtonText: 'Sign In',
+                title: t('cart.signInRequired'),
+                text: t('cart.signInText'),
+                confirmButtonText: t('cart.signInButton'),
                 confirmButtonColor: '#000',
                 showCancelButton: true,
-                cancelButtonText: 'Cancel'
+                cancelButtonText: t('cart.cancel')
             }).then((result) => {
                 if (result.isConfirmed) {
                     navigate('/login?redirect=/checkout', { state: { coupon: couponData } });
@@ -109,12 +115,12 @@ const CartPage = () => {
                         <span className="text-2xl">🛍️</span>
                     </div>
                 </div>
-                <h2 className="text-4xl font-black font-display text-gray-900 dark:text-white mb-4 tracking-tight">Your Bag is Empty</h2>
+                <h2 className="text-4xl font-black font-display text-gray-900 dark:text-white mb-4 tracking-tight">{t('cart.empty')}</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-10 max-w-sm text-center font-medium leading-relaxed">
-                    Looks like you haven't added anything to your cart yet. Discover our new arrivals!
+                    {t('cart.continueShopping')}
                 </p>
                 <Button to="/shop" size="lg" className="rounded-full px-12 h-14 shadow-xl shadow-gray-900/20 dark:shadow-none hover:transform hover:scale-105 transition-all text-sm uppercase tracking-widest font-bold">
-                    Start Shopping
+                    {t('cart.continueShopping')}
                 </Button>
             </div>
         );
@@ -131,12 +137,12 @@ const CartPage = () => {
                 <header className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                     <div>
                         <h1 className="text-4xl md:text-5xl font-black font-display text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">
-                            🛒 Shopping <span className="bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">Bag</span>
+                            🛒 {t('cart.title')}
                         </h1>
-                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-xs tracking-[0.2em]">{totalItems} Items in your bag</p>
+                        <p className="text-gray-500 dark:text-gray-400 font-bold uppercase text-xs tracking-[0.2em]">{totalItems} {t('cart.item')}</p>
                     </div>
                     <Link to="/shop" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                        <FiArrowLeft /> Continue Shopping
+                        <FiArrowLeft /> {t('cart.continueShopping')}
                     </Link>
                 </header>
 
@@ -152,8 +158,8 @@ const CartPage = () => {
                                 </div>
                                 <p className="text-sm font-bold text-gray-800 dark:text-gray-200">
                                     {remainingForFreeShipping > 0
-                                        ? <span>Add <span className="text-gray-900 dark:text-white text-lg">{remainingForFreeShipping.toLocaleString()} EGP</span> more for <span className="text-green-600 uppercase tracking-wider">FREE SHIPPING</span></span>
-                                        : <span className="text-green-600">You've unlocked <span className="uppercase tracking-wider">FREE SHIPPING!</span> 🎉</span>
+                                        ? <span>{t('cart.freeShipping.add')} <span className="text-gray-900 dark:text-white text-lg">{formatPrice(remainingForFreeShipping)}</span> {t('cart.freeShipping.more')} <span className="text-green-600 uppercase tracking-wider">{t('cart.freeShipping.freeShipping')}</span></span>
+                                        : <span className="text-green-600">{t('cart.freeShipping.unlocked')} <span className="uppercase tracking-wider">{t('cart.freeShipping.freeShipping')}</span>! {t('cart.freeShipping.celebrate')}</span>
                                     }
                                 </p>
                             </div>
@@ -173,8 +179,8 @@ const CartPage = () => {
                                         {/* Image */}
                                         <Link to={`/product/${item._id}`} className="block w-full sm:w-40 h-48 bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden flex-shrink-0 relative">
                                             <img
-                                                src={item.image}
-                                                alt={item.name}
+                                                src={getImageUrl(item.image)}
+                                                alt={getLocalizedName(item.name)}
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
                                         </Link>
@@ -185,18 +191,23 @@ const CartPage = () => {
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
                                                         {item.isCustomOrder && (
-                                                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Custom</span>
+                                                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wider rounded-md">{t('cart.custom')}</span>
                                                         )}
-                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{item.category?.name || 'Collection'}</span>
+                                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                            {(() => {
+                                                                const catName = typeof item.category === 'object' ? item.category?.name : item.category;
+                                                                return getLocalizedName(catName, 'Collection');
+                                                            })()}
+                                                        </span>
                                                     </div>
                                                     <Link to={`/product/${item._id}`} className="block text-xl font-black text-gray-900 dark:text-white mb-3 hover:underline decoration-2 underline-offset-4">
-                                                        {item.name}
+                                                        {getLocalizedName(item.name)}
                                                     </Link>
 
                                                     {/* Attributes */}
                                                     <div className="flex flex-wrap gap-3">
                                                         <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 flex items-center gap-2 uppercase tracking-wide">
-                                                            <span>Size:</span> {item.size || 'N/A'}
+                                                            <span>{t('product.size')}:</span> {item.size || 'N/A'}
                                                         </div>
                                                         {item.color && (
                                                             <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 flex items-center gap-2 uppercase tracking-wide">
@@ -210,7 +221,7 @@ const CartPage = () => {
                                                 <button
                                                     onClick={() => dispatch(removeFromCart({ _id: item._id, size: item.size, color: item.color }))}
                                                     className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
-                                                    title="Remove Item"
+                                                    title={t('cart.remove')}
                                                 >
                                                     <FiTrash2 size={20} />
                                                 </button>
@@ -236,7 +247,7 @@ const CartPage = () => {
 
                                                 {/* Price */}
                                                 <p className="text-xl font-black text-gray-900 dark:text-white">
-                                                    {(item.price * item.qty).toLocaleString()} <span className="text-sm font-bold ml-1 text-gray-500">EGP</span>
+                                                    {formatPrice(item.price * item.qty)}
                                                 </p>
                                             </div>
                                         </div>
@@ -250,7 +261,7 @@ const CartPage = () => {
                     <div className="lg:col-span-4 lg:sticky lg:top-32 h-fit space-y-6">
                         {/* Order Summary Card */}
                         <div className="bg-white dark:bg-[#252525] rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none p-8">
-                            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase italic tracking-tighter">Order Summary</h3>
+                            <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase italic tracking-tighter">{t('checkout.orderSummary')}</h3>
 
                             {/* Coupon Input */}
                             <div className="mb-8">
@@ -261,7 +272,7 @@ const CartPage = () => {
                                                 type="text"
                                                 value={couponCode}
                                                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                                placeholder="Promo Code"
+                                                placeholder={t('cart.couponCode')}
                                                 className="w-full bg-gray-50 dark:bg-gray-800 border border-transparent focus:border-gray-900 dark:focus:border-white rounded-xl py-3 pl-4 pr-4 text-sm font-bold uppercase tracking-widest placeholder:text-gray-400 outline-none transition-all dark:text-white"
                                             />
                                         </div>
@@ -270,7 +281,7 @@ const CartPage = () => {
                                             isLoading={couponLoading}
                                             className="rounded-xl px-4 bg-black dark:bg-white text-white dark:text-black hover:opacity-80"
                                         >
-                                            Apply
+                                            {t('cart.apply')}
                                         </Button>
                                     </div>
                                 ) : (
@@ -292,32 +303,32 @@ const CartPage = () => {
                             {/* Totals */}
                             <div className="space-y-3 pb-6 border-b border-gray-100 dark:border-gray-800 mb-6">
                                 <div className="flex justify-between text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span>Subtotal</span>
-                                    <span className="text-gray-900 dark:text-white font-bold">{totalPrice.toLocaleString()} EGP</span>
+                                    <span>{t('cart.subtotal')}</span>
+                                    <span className="text-gray-900 dark:text-white font-bold">{formatPrice(totalPrice)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span>Shipping</span>
+                                    <span>{t('cart.shipping')}</span>
                                     <span className={`${shippingPrice === 0 ? 'text-green-600 font-bold' : 'text-gray-900 dark:text-white font-bold'}`}>
-                                        {shippingPrice === 0 ? 'FREE' : `${shippingPrice} EGP`}
+                                        {shippingPrice === 0 ? t('checkout.free') : formatPrice(shippingPrice)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm font-medium text-gray-500 dark:text-gray-400">
-                                    <span>Tax (14%)</span>
-                                    <span className="text-gray-900 dark:text-white font-bold">{taxPrice.toLocaleString()} EGP</span>
+                                    <span>{t('cart.tax')} (14%)</span>
+                                    <span className="text-gray-900 dark:text-white font-bold">{formatPrice(taxPrice)}</span>
                                 </div>
                                 {couponData && (
                                     <div className="flex justify-between text-sm font-bold text-green-600">
-                                        <span>Discount</span>
-                                        <span>-{discountAmount.toLocaleString()} EGP</span>
+                                        <span>{t('cart.discount')}</span>
+                                        <span>-{formatPrice(discountAmount)}</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Final Total */}
                             <div className="flex justify-between items-end mb-8">
-                                <span className="text-sm font-black uppercase tracking-widest text-gray-400">Total</span>
+                                <span className="text-sm font-black uppercase tracking-widest text-gray-400">{t('cart.total')}</span>
                                 <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                                    {finalTotal.toLocaleString()} <span className="text-sm font-bold text-gray-500">EGP</span>
+                                    {formatPrice(finalTotal)}
                                 </span>
                             </div>
 
@@ -328,7 +339,7 @@ const CartPage = () => {
                                 className="group h-14 rounded-xl shadow-lg shadow-gray-900/10 dark:shadow-none hover:shadow-xl hover:-translate-y-1 transition-all text-sm font-black uppercase tracking-widest bg-gray-900 dark:bg-white text-white dark:text-black"
                             >
                                 <span className="flex items-center gap-2">
-                                    <FiLock size={16} className="text-gray-400 dark:text-gray-500 group-hover:text-white dark:group-hover:text-black transition-colors" /> Checkout
+                                    <FiLock size={16} className="text-gray-400 dark:text-gray-500 group-hover:text-white dark:group-hover:text-black transition-colors" /> {t('cart.proceedToCheckout')}
                                 </span>
                             </Button>
                         </div>
@@ -337,11 +348,11 @@ const CartPage = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white dark:bg-[#252525] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center">
                                 <span className="text-2xl mb-1 block">🔒</span>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Secure Payment</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{t('cart.securePayment')}</p>
                             </div>
                             <div className="bg-white dark:bg-[#252525] p-4 rounded-2xl border border-gray-100 dark:border-gray-800 text-center">
                                 <span className="text-2xl mb-1 block">↩️</span>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Easy Returns</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{t('cart.easyReturns')}</p>
                             </div>
                         </div>
                     </div>

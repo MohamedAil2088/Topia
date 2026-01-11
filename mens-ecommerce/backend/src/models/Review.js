@@ -20,6 +20,19 @@ const reviewSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
         required: true
+    },
+    // Admin moderation fields
+    approved: {
+        type: Boolean,
+        default: true // Auto-approve by default, Admin can change
+    },
+    featured: {
+        type: Boolean,
+        default: false // Admin can feature certain reviews
+    },
+    hidden: {
+        type: Boolean,
+        default: false // Admin can hide reviews without deleting
     }
 }, {
     timestamps: true

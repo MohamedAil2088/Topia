@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Loader from '../components/Loader';
 import { FiMapPin, FiCreditCard, FiCheckCircle, FiTruck, FiBox, FiArrowLeft, FiDownload } from 'react-icons/fi';
 import { motion } from 'framer-motion';
@@ -7,13 +8,30 @@ import api from '../utils/api';
 import Swal from 'sweetalert2';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getLocalizedName } from '../utils/getLocalizedName';
+import { getImageUrl } from '../utils/imageUtils';
 
 const OrderDetailsPage = () => {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
+    // SVG Placeholder
+    const PLACEHOLDER_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="400"%3E%3Crect fill="%23f3f4f6" width="300" height="400"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="24" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+
     const fetchOrder = async () => {
+        // Guard against undefined ID
+        if (!id || id === 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Order',
+                text: 'Order ID is missing or invalid',
+            });
+            setLoading(false);
+            return;
+        }
+
         try {
             const { data } = await api.get(`/orders/${id}`);
             setOrder(data.data || data);
@@ -61,7 +79,7 @@ const OrderDetailsPage = () => {
 
         // Table
         const tableRows = order.orderItems.map((item: any) => [
-            item.name,
+            getLocalizedName(item.name),
             item.qty,
             `${item.price.toFixed(2)} EGP`,
             `${(item.qty * item.price).toFixed(2)} EGP`
@@ -178,11 +196,21 @@ const OrderDetailsPage = () => {
                             {order.orderItems.map((item: any) => (
                                 <div key={item._id} className="p-6 flex gap-4 items-center">
                                     <div className="w-20 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        <img
+                                            src={getImageUrl(item.image) || PLACEHOLDER_IMG}
+                                            alt={getLocalizedName(item.name)}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                if (target.src !== PLACEHOLDER_IMG) {
+                                                    target.src = PLACEHOLDER_IMG;
+                                                }
+                                            }}
+                                        />
                                     </div>
                                     <div className="flex-grow">
                                         <Link to={`/product/${item.product}`} className="font-bold text-gray-900 hover:text-primary-600 transition-colors block mb-1">
-                                            {item.name}
+                                            {getLocalizedName(item.name)}
                                         </Link>
                                         <div className="text-sm text-gray-500 mb-2">
                                             {item.size} / {item.color}

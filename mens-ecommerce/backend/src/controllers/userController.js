@@ -68,6 +68,61 @@ exports.updateUserProfile = async (req, res) => {
     }
 };
 
+// @desc    Change password
+// @route   PUT /api/users/password
+// @access  Private
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        // Validate input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'يرجى إدخال كلمة المرور الحالية والجديدة'
+            });
+        }
+
+        // Password strength validation
+        const passwordRegex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+
+        if (!passwordRegex.test(newPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: 'كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل، حرف كبير، حرف صغير، رقم، ورمز خاص (#?!@$%^&*-)'
+            });
+        }
+
+        // Get user with password field
+        const user = await User.findById(req.user._id).select('+password');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'المستخدم غير موجود' });
+        }
+
+        // Check if current password matches
+        const isMatch = await user.matchPassword(currentPassword);
+
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: 'كلمة المرور الحالية غير صحيحة'
+            });
+        }
+
+        // Update password
+        user.password = newPassword; // Pre-save hook will hash it
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'تم تغيير كلمة المرور بنجاح'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // @desc    Get all users (Admin)
 // @route   GET /api/users
 // @access  Private/Admin

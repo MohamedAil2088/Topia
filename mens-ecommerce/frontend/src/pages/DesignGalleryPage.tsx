@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FiSearch, FiFilter } from 'react-icons/fi';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import CustomDropdown from '../components/CustomDropdown';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface Design {
     _id: string;
@@ -17,12 +19,33 @@ interface Design {
 }
 
 const DesignGalleryPage = () => {
+    const { t, i18n } = useTranslation();
     const [designs, setDesigns] = useState<Design[]>([]);
     const [filteredDesigns, setFilteredDesigns] = useState<Design[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [sortBy, setSortBy] = useState('newest');
+
+    // Helper function to translate category names
+    const translateCategory = (category: string) => {
+        const categoryTranslations: { [key: string]: { en: string; ar: string } } = {
+            'T-Shirt': { en: 'T-Shirts', ar: 'تيشرتات' },
+            'T-Shirts': { en: 'T-Shirts', ar: 'تيشرتات' },
+            'Shirt': { en: 'Shirts', ar: 'قمصان' },
+            'Shirts': { en: 'Shirts', ar: 'قمصان' },
+            'Pants': { en: 'Pants', ar: 'بناطيل' },
+            'Shoes': { en: 'Shoes', ar: 'أحذية' },
+            'Jackets': { en: 'Jackets', ar: 'جاكيتات' },
+            'Accessories': { en: 'Accessories', ar: 'إكسسوارات' }
+        };
+
+        const translation = categoryTranslations[category];
+        if (translation) {
+            return i18n.language === 'ar' ? translation.ar : translation.en;
+        }
+        return category;
+    };
 
     useEffect(() => {
         fetchDesigns();
@@ -93,18 +116,18 @@ const DesignGalleryPage = () => {
     return (
         <div className="bg-gray-50 dark:bg-[#1a1a1a] min-h-screen transition-colors duration-300 pt-32">
             <Helmet>
-                <title>Design Gallery | Topia</title>
-                <meta name="description" content="Explore our exclusive collection of premium designs." />
+                <title>{t('designGallery.title')} | Topia</title>
+                <meta name="description" content={t('designGallery.subtitle')} />
             </Helmet>
 
             <div className="container mx-auto px-4">
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-5xl font-black text-gray-900 mb-4">
-                        🎨 Design <span className="bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">Gallery</span>
+                        🎨 {t('designGallery.title').split(' ')[0]} <span className="bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">{t('designGallery.title').split(' ').slice(1).join(' ')}</span>
                     </h1>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Explore our exclusive collection of premium designs for your custom orders
+                        {t('designGallery.subtitle')}
                     </p>
                 </div>
 
@@ -116,7 +139,7 @@ const DesignGalleryPage = () => {
                             <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                             <input
                                 type="text"
-                                placeholder="Search designs..."
+                                placeholder={t('designGallery.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-primary-100 focus:border-primary-600 outline-none transition-all"
@@ -129,7 +152,7 @@ const DesignGalleryPage = () => {
                             onChange={(value) => setSelectedCategory(value)}
                             options={categories.map(cat => ({
                                 value: cat,
-                                label: cat === 'all' ? 'All Categories' : cat,
+                                label: cat === 'all' ? t('designGallery.allCategories') : translateCategory(cat),
                                 icon: cat === 'all' ? '📂' : '🎨'
                             }))}
                             icon={
@@ -144,16 +167,16 @@ const DesignGalleryPage = () => {
                             value={sortBy}
                             onChange={(value) => setSortBy(value)}
                             options={[
-                                { value: 'newest', label: 'Newest First', icon: '🆕' },
-                                { value: 'price-low', label: 'Price: Low to High', icon: '💰' },
-                                { value: 'price-high', label: 'Price: High to Low', icon: '💎' }
+                                { value: 'newest', label: t('designGallery.sortBy.newest'), icon: '🆕' },
+                                { value: 'price-low', label: t('designGallery.sortBy.priceLow'), icon: '💰' },
+                                { value: 'price-high', label: t('designGallery.sortBy.priceHigh'), icon: '💎' }
                             ]}
                         />
                     </div>
 
                     {/* Results Count */}
                     <div className="mt-4 text-sm text-gray-600 font-medium">
-                        Showing <span className="font-black text-primary-600">{filteredDesigns.length}</span> of {designs.length} designs
+                        {t('designGallery.showing')} <span className="font-black text-primary-600">{filteredDesigns.length}</span> {t('designGallery.of')} {designs.length} {t('designGallery.designs')}
                     </div>
                 </div>
 
@@ -162,8 +185,8 @@ const DesignGalleryPage = () => {
                     filteredDesigns.length === 0 ? (
                         <div className="text-center py-16">
                             <div className="text-6xl mb-4">🎨</div>
-                            <h3 className="text-2xl font-black text-gray-900 mb-2">No Designs Found</h3>
-                            <p className="text-gray-600">Try adjusting your filters or search query</p>
+                            <h3 className="text-2xl font-black text-gray-900 mb-2">{t('designGallery.noDesigns')}</h3>
+                            <p className="text-gray-600">{t('designGallery.noDesignsText')}</p>
                         </div>
                     ) : (
                         /* Design Grid */
@@ -176,14 +199,14 @@ const DesignGalleryPage = () => {
                                     {/* Image */}
                                     <div className="relative h-64 bg-gray-100 overflow-hidden">
                                         <img
-                                            src={design.image}
+                                            src={getImageUrl(design.image)}
                                             alt={design.name}
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                         />
 
                                         {/* Category Badge */}
                                         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                                            <span className="text-xs font-black text-gray-900">{design.category}</span>
+                                            <span className="text-xs font-black text-gray-900">{translateCategory(design.category)}</span>
                                         </div>
                                     </div>
 
@@ -213,7 +236,7 @@ const DesignGalleryPage = () => {
 
                                         {/* Price */}
                                         <div className="pt-4 border-t border-gray-100">
-                                            <p className="text-xs text-gray-500 font-medium">Starting at</p>
+                                            <p className="text-xs text-gray-500 font-medium">{t('designGallery.startingAt')}</p>
                                             <p className="text-2xl font-black text-primary-600">
                                                 {design.price} <span className="text-sm">EGP</span>
                                             </p>

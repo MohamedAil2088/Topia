@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { FiEye, FiCheck, FiX, FiFilter, FiDownload, FiSearch, FiClock, FiSettings, FiEdit, FiPackage } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import api from '../../utils/api';
 import Button from '../../components/Button';
 import Loader from '../../components/Loader';
+import { getLocalizedName } from '../../utils/getLocalizedName';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const AdminCustomOrdersPage = () => {
     const [orders, setOrders] = useState<any[]>([]);
@@ -21,7 +24,7 @@ const AdminCustomOrdersPage = () => {
 
     const fetchOrders = async () => {
         try {
-            const { data } = await api.get(`/ custom - orders / admin / all ? status = ${selectedStatus === 'all' ? '' : selectedStatus} `);
+            const { data } = await api.get(`/custom-orders/admin/all?status=${selectedStatus === 'all' ? '' : selectedStatus}`);
             setOrders(data.data || []);
         } catch (error) {
             console.error('Error fetching orders:', error);
@@ -41,15 +44,16 @@ const AdminCustomOrdersPage = () => {
 
     const updateStatus = async (orderId: string, newStatus: string, note: string = '') => {
         try {
-            await api.put(`/ custom - orders / ${orderId}/status`, {
+            await api.put(`/custom-orders/${orderId}/status`, {
                 status: newStatus,
                 note
             });
             fetchOrders();
             setShowModal(false);
+            toast.success('تم تحديث حالة الطلب بنجاح!');
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Failed to update status');
+            toast.error('فشل تحديث الحالة');
         }
     };
 
@@ -171,12 +175,12 @@ const AdminCustomOrdersPage = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <img
-                                                src={order.product?.images[0]}
-                                                alt={order.product?.name}
+                                                src={getImageUrl(order.product?.images[0])}
+                                                alt={getLocalizedName(order.product?.name)}
                                                 className="w-12 h-12 object-cover rounded-lg"
                                             />
                                             <div>
-                                                <p className="font-semibold text-sm">{order.product?.name}</p>
+                                                <p className="font-semibold text-sm">{getLocalizedName(order.product?.name)}</p>
                                                 <p className="text-xs text-gray-500">
                                                     {order.size} | {order.color}
                                                 </p>
@@ -188,7 +192,7 @@ const AdminCustomOrdersPage = () => {
                                             {order.customization.designImages.slice(0, 2).map((img: any, index: number) => (
                                                 <img
                                                     key={index}
-                                                    src={`http://localhost:5000${img.url}`}
+                                                    src={getImageUrl(img.url)}
                                                     alt={`Design ${index + 1}`}
                                                     className="w-10 h-10 object-cover rounded border border-gray-200"
                                                 />
@@ -279,7 +283,7 @@ const AdminCustomOrdersPage = () => {
                                 <div>
                                     <h3 className="font-black text-gray-900 mb-3">Product Details</h3>
                                     <div className="space-y-2 text-sm">
-                                        <p><span className="text-gray-500">Product:</span> <span className="font-semibold">{selectedOrder.product?.name}</span></p>
+                                        <p><span className="text-gray-500">Product:</span> <span className="font-semibold">{getLocalizedName(selectedOrder.product?.name)}</span></p>
                                         <p><span className="text-gray-500">Size:</span> <span className="font-semibold">{selectedOrder.size}</span></p>
                                         <p><span className="text-gray-500">Color:</span> <span className="font-semibold">{selectedOrder.color}</span></p>
                                         <p><span className="text-gray-500">Quantity:</span> <span className="font-semibold">{selectedOrder.quantity}</span></p>
@@ -294,13 +298,13 @@ const AdminCustomOrdersPage = () => {
                                     {selectedOrder.customization.designImages.map((img: any, index: number) => (
                                         <a
                                             key={index}
-                                            href={`http://localhost:5000${img.url}`}
+                                            href={getImageUrl(img.url)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-600 transition-colors"
                                         >
                                             <img
-                                                src={`http://localhost:5000${img.url}`}
+                                                src={getImageUrl(img.url)}
                                                 alt={`Design ${index + 1}`}
                                                 className="w-full h-full object-cover"
                                             />

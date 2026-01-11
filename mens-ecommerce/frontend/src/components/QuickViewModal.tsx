@@ -3,6 +3,9 @@ import { FiX, FiShoppingCart, FiCheck } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../hooks/useRedux';
 import { addToCart } from '../redux/slices/cartSlice';
+import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../utils/getLocalizedName';
 
 interface QuickViewModalProps {
     product: any;
@@ -10,6 +13,7 @@ interface QuickViewModalProps {
 }
 
 const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
@@ -19,7 +23,10 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
 
     const handleAddToCart = () => {
         if (!selectedSize || !selectedColor) {
-            alert('Please select size and color');
+            toast.warning(t('quickView.selectSizeColor'), {
+                position: 'top-center',
+                autoClose: 3000,
+            });
             return;
         }
         dispatch(addToCart({
@@ -47,7 +54,7 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
                 <div className="w-full md:w-1/2 h-64 md:h-auto bg-gray-100 relative group">
                     <img
                         src={product.images[0]}
-                        alt={product.name}
+                        alt={getLocalizedName(product.name)}
                         className="w-full h-full object-cover"
                     />
                 </div>
@@ -56,9 +63,9 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
                 <div className="w-full md:w-1/2 p-8 overflow-y-auto">
                     <div className="mb-6">
                         <Link to={`/product/${product._id}`} className="hover:underline">
-                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2 font-display uppercase tracking-tight">{product.name}</h2>
+                            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2 font-display uppercase tracking-tight">{getLocalizedName(product.name)}</h2>
                         </Link>
-                        <p className="text-xl font-bold text-gray-500 dark:text-gray-400">{product.price} EGP</p>
+                        <p className="text-xl font-bold text-gray-500 dark:text-gray-400">{product.price} {t('common.currency')}</p>
                     </div>
 
                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-8 leading-relaxed line-clamp-3">
@@ -67,7 +74,7 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
 
                     <div className="space-y-6 mb-8">
                         <div>
-                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest block mb-3">Select Size</span>
+                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest block mb-3">{t('quickView.selectSize')}</span>
                             <div className="flex flex-wrap gap-2">
                                 {product.sizes?.map((size: string) => (
                                     <button
@@ -86,7 +93,7 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
                         </div>
 
                         <div>
-                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest block mb-3">Select Color</span>
+                            <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-widest block mb-3">{t('quickView.selectColor')}</span>
                             <div className="flex flex-wrap gap-2">
                                 {product.colors?.map((color: string) => (
                                     <button
@@ -117,11 +124,11 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
                         >
                             {added ? (
                                 <>
-                                    <FiCheck size={20} /> Added
+                                    <FiCheck size={20} /> {t('quickView.added')}
                                 </>
                             ) : (
                                 <>
-                                    <FiShoppingCart size={18} /> Add to Cart
+                                    <FiShoppingCart size={18} /> {t('quickView.addToCart')}
                                 </>
                             )}
                         </button>
@@ -129,7 +136,7 @@ const QuickViewModal = ({ product, onClose }: QuickViewModalProps) => {
                             to={`/product/${product._id}`}
                             className="px-6 py-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm uppercase tracking-widest hover:border-gray-900 dark:hover:border-white transition-all text-gray-900 dark:text-white"
                         >
-                            Full Details
+                            {t('quickView.fullDetails')}
                         </Link>
                     </div>
                 </div>

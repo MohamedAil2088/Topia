@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { FiShoppingBag, FiArrowRight, FiClock, FiRotateCcw, FiPackage, FiUser, FiMapPin, FiChevronRight } from 'react-icons/fi';
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
 import { addToCart } from '../redux/slices/cartSlice';
 import Swal from 'sweetalert2';
+import { getLocalizedName } from '../utils/getLocalizedName';
 
 interface PurchasedProduct {
     _id: string;
@@ -15,6 +17,7 @@ interface PurchasedProduct {
 }
 
 const PurchaseHistoryPage = () => {
+    const { t } = useTranslation();
     const { userInfo } = useAppSelector((state) => state.auth);
     const [products, setProducts] = useState<PurchasedProduct[]>([]);
     const [loading, setLoading] = useState(true);
@@ -22,6 +25,9 @@ const PurchaseHistoryPage = () => {
     const [pages, setPages] = useState(1);
     const [total, setTotal] = useState(0);
     const dispatch = useAppDispatch();
+
+    // SVG Placeholder
+    const PLACEHOLDER_IMG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="300" height="400"%3E%3Crect fill="%23f3f4f6" width="300" height="400"/%3E%3Ctext fill="%239ca3af" font-family="sans-serif" font-size="24" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
 
     useEffect(() => {
         const fetchPurchasedProducts = async () => {
@@ -48,7 +54,7 @@ const PurchaseHistoryPage = () => {
     const handleBuyAgain = (product: PurchasedProduct) => {
         dispatch(addToCart({
             _id: product._id,
-            name: product.name,
+            name: getLocalizedName(product.name),
             image: product.image,
             price: product.price,
             stock: 10,
@@ -57,8 +63,8 @@ const PurchaseHistoryPage = () => {
 
         Swal.fire({
             icon: 'success',
-            title: 'Added to Cart',
-            text: `${product.name} is ready for checkout!`,
+            title: t('purchaseHistory.addedToCart.title'),
+            text: t('purchaseHistory.addedToCart.text', { name: getLocalizedName(product.name) }),
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
@@ -68,11 +74,11 @@ const PurchaseHistoryPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50/50">
-            <div className="container mx-auto px-4 py-12">
+            <div className="container mx-auto px-4 py-12 pt-40">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
                     <div>
-                        <h1 className="text-4xl font-black font-display text-primary-900 tracking-tight">Purchase History</h1>
-                        <p className="text-gray-500 font-medium mt-1">Showing {total} pieces in your signature collection</p>
+                        <h1 className="text-4xl font-black font-display text-primary-900 tracking-tight">{t('purchaseHistory.title')}</h1>
+                        <p className="text-gray-500 font-medium mt-1">{t('purchaseHistory.subtitle', { count: total })}</p>
                     </div>
                 </div>
 
@@ -87,25 +93,25 @@ const PurchaseHistoryPage = () => {
                                     </div>
                                     <div className="truncate">
                                         <p className="text-sm font-black text-gray-900 truncate">{userInfo?.name}</p>
-                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Verified Member</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{t('orders.verifiedMember')}</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="py-4">
                                 <Link to="/profile" className="flex items-center justify-between px-6 py-4 text-gray-500 hover:text-primary-900 hover:bg-gray-50 transition-all group">
-                                    <span className="flex items-center gap-3 font-bold"><FiUser /> Profile Overview</span>
+                                    <span className="flex items-center gap-3 font-bold"><FiUser /> {t('orders.profileOverview')}</span>
                                     <FiChevronRight className="opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                                 </Link>
                                 <Link to="/profile/orders" className="flex items-center justify-between px-6 py-4 text-gray-500 hover:text-primary-900 hover:bg-gray-50 transition-all group">
-                                    <span className="flex items-center gap-3 font-bold"><FiPackage /> My Orders</span>
+                                    <span className="flex items-center gap-3 font-bold"><FiPackage /> {t('navbar.myOrders')}</span>
                                     <FiChevronRight className="opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                                 </Link>
                                 <Link to="/profile/history" className="flex items-center justify-between px-6 py-4 text-primary-700 bg-primary-50/50 border-r-4 border-primary-900 transition-all group">
-                                    <span className="flex items-center gap-3 font-bold"><FiClock /> Purchase History</span>
+                                    <span className="flex items-center gap-3 font-bold"><FiClock /> {t('orders.purchaseHistory')}</span>
                                     <FiChevronRight className="transition-transform group-hover:translate-x-1" />
                                 </Link>
                                 <Link to="/profile/addresses" className="flex items-center justify-between px-6 py-4 text-gray-500 hover:text-primary-900 hover:bg-gray-50 transition-all group">
-                                    <span className="flex items-center gap-3 font-bold"><FiMapPin /> Saved Addresses</span>
+                                    <span className="flex items-center gap-3 font-bold"><FiMapPin /> {t('orders.savedAddresses')}</span>
                                     <FiChevronRight className="opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
                                 </Link>
                             </div>
@@ -117,17 +123,17 @@ const PurchaseHistoryPage = () => {
                         {loading ? (
                             <div className="p-32 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-gray-100 shadow-sm">
                                 <Loader />
-                                <p className="mt-8 text-gray-400 font-bold animate-pulse uppercase tracking-[0.3em] text-[10px]">Filtering History...</p>
+                                <p className="mt-8 text-gray-400 font-bold animate-pulse uppercase tracking-[0.3em] text-[10px]">{t('purchaseHistory.filtering')}</p>
                             </div>
                         ) : products.length === 0 ? (
                             <div className="text-center py-32 bg-white rounded-[3rem] border border-gray-100 shadow-sm px-10">
                                 <div className="w-32 h-32 bg-gray-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 text-gray-200 transform -rotate-12">
                                     <FiRotateCcw size={64} />
                                 </div>
-                                <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">No History Yet</h2>
-                                <p className="text-gray-500 mb-12 max-w-sm mx-auto font-medium leading-relaxed">You haven't purchased any items yet. Your favorite pieces will appear here after your first order.</p>
+                                <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">{t('purchaseHistory.emptyTitle')}</h2>
+                                <p className="text-gray-500 mb-12 max-w-sm mx-auto font-medium leading-relaxed">{t('purchaseHistory.emptyDesc')}</p>
                                 <Link to="/shop" className="inline-flex items-center gap-3 bg-primary-900 text-white px-10 py-5 rounded-3xl font-black uppercase tracking-widest text-xs hover:bg-black hover:scale-105 transition-all shadow-xl shadow-primary-900/20 active:scale-95">
-                                    Browse Shop <FiArrowRight />
+                                    {t('purchaseHistory.browseShop')} <FiArrowRight />
                                 </Link>
                             </div>
                         ) : (
@@ -137,32 +143,38 @@ const PurchaseHistoryPage = () => {
                                         <div key={product._id} className="group bg-white rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-primary-100 transition-all duration-500 overflow-hidden flex flex-col">
                                             <div className="relative aspect-[4/5] overflow-hidden">
                                                 <img
-                                                    src={product.image}
-                                                    alt={product.name}
+                                                    src={product.image || PLACEHOLDER_IMG}
+                                                    alt={getLocalizedName(product.name)}
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        if (target.src !== PLACEHOLDER_IMG) {
+                                                            target.src = PLACEHOLDER_IMG;
+                                                        }
+                                                    }}
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 <div className="absolute top-6 right-6">
                                                     <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-wider text-gray-900 shadow-xl">
-                                                        Elite Asset
+                                                        {t('purchaseHistory.eliteAsset')}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="p-8 flex-grow flex flex-col">
                                                 <Link to={`/product/${product._id}`} className="text-xl font-black text-gray-900 hover:text-primary-600 transition-colors mb-2 block truncate">
-                                                    {product.name}
+                                                    {getLocalizedName(product.name)}
                                                 </Link>
-                                                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">Original Purchase</p>
+                                                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-4">{t('purchaseHistory.originalPurchase')}</p>
 
                                                 <div className="flex items-end justify-between mt-auto">
                                                     <div>
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase mb-1">Price</p>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase mb-1">{t('purchaseHistory.price')}</p>
                                                         <p className="text-2xl font-black text-primary-900 tabular-nums">{product.price.toLocaleString()} <span className="text-xs">EGP</span></p>
                                                     </div>
                                                     <button
                                                         onClick={() => handleBuyAgain(product)}
                                                         className="bg-primary-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-black transition-all shadow-lg shadow-primary-900/20 active:scale-90"
-                                                        title="Buy Again"
+                                                        title={t('purchaseHistory.buyAgain')}
                                                     >
                                                         <FiShoppingBag size={22} />
                                                     </button>
@@ -215,18 +227,18 @@ const PurchaseHistoryPage = () => {
                                             <div className="w-16 h-16 bg-accent-500/20 rounded-2xl flex items-center justify-center text-accent-400 mb-8 border border-accent-500/20">
                                                 <FiRotateCcw size={32} />
                                             </div>
-                                            <h3 className="text-4xl font-black mb-6 tracking-tight">Elite Re-ordering</h3>
+                                            <h3 className="text-4xl font-black mb-6 tracking-tight">{t('purchaseHistory.banner.title')}</h3>
                                             <p className="text-gray-400 font-medium leading-relaxed mb-8 max-w-sm">
-                                                Your essentials are just a click away. Enjoy priority processing on all re-ordered items from your signature collection.
+                                                {t('purchaseHistory.banner.desc')}
                                             </p>
                                             <div className="flex gap-6">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-2 h-2 bg-accent-500 rounded-full animate-ping"></div>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Fast Lane</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">{t('purchaseHistory.banner.fastLane')}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-2 h-2 bg-primary-400 rounded-full animate-pulse"></div>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Priority Track</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">{t('purchaseHistory.banner.priorityTrack')}</span>
                                                 </div>
                                             </div>
                                         </div>

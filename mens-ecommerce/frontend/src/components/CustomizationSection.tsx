@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { FiUpload, FiX, FiCheck, FiLayout } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import Button from './Button';
 import DesignSelectionModal from './DesignSelectionModal';
+import getLocalizedName from '../utils/getLocalizedName';
+import { getImageUrl } from '../utils/imageUtils';
 
 interface CustomizationSectionProps {
     product: any;
@@ -57,9 +60,24 @@ const CustomizationSection = ({ product, onAddToCart }: CustomizationSectionProp
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
+        // التحقق من تسجيل الدخول
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (!userInfoStr) {
+            toast.warning('يرجى تسجيل الدخول أولاً لرفع الصور');
+            return;
+        }
+
+        const userInfo = JSON.parse(userInfoStr);
+        const token = userInfo?.token;
+
+        if (!token) {
+            toast.error('جلسة غير صالحة، يرجى تسجيل الدخول مرة أخرى');
+            return;
+        }
+
         // التحقق من الحد الأقصى (5 صور)
         if (uploadedImages.length + files.length > 5) {
-            alert('يمكنك رفع 5 صور كحد أقصى');
+            toast.warning('يمكنك رفع 5 صور كحد أقصى');
             return;
         }
 
@@ -71,24 +89,31 @@ const CustomizationSection = ({ product, onAddToCart }: CustomizationSectionProp
                 formData.append('designImages', file);
             });
 
-            const response = await fetch('http://localhost:5000/api/custom-orders/upload-images', {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const response = await fetch(`${apiUrl}/custom-orders/upload-images`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: formData
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'فشل رفع الصور');
+            }
 
             const data = await response.json();
 
             if (data.success) {
                 setUploadedImages([...uploadedImages, ...data.data]);
+                toast.success('تم رفع الصور بنجاح! ✨');
             } else {
-                alert('فشل رفع الصور');
+                toast.error('فشل رفع الصور');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error uploading images:', error);
-            alert('حدث خطأ أثناء رفع الصور');
+            toast.error(error.message || 'حدث خطأ أثناء رفع الصور');
         } finally {
             setUploading(false);
         }
@@ -109,11 +134,11 @@ const CustomizationSection = ({ product, onAddToCart }: CustomizationSectionProp
         if (orderType === 'custom') {
             // التحقق من وجود تصميم (مرفوع أو مختار)
             if (designSource === 'upload' && uploadedImages.length === 0) {
-                alert('الرجاء رفع صورة واحدة على الأقل للتصميم');
+                toast.warning('الرجاء رفع صورة واحدة على الأقل للتصميم');
                 return;
             }
             if (designSource === 'template' && !selectedDesign) {
-                alert('الرجاء اختيار تصميم من القوالب المتاحة');
+                toast.warning('الرجاء اختيار تصميم من القوالب المتاحة');
                 return;
             }
         }
@@ -242,7 +267,7 @@ const CustomizationSection = ({ product, onAddToCart }: CustomizationSectionProp
                             <div className="grid grid-cols-3 gap-3 mb-3">
                                 {uploadedImages.map((img, index) => (
                                     <div key={index} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100">
-                                        <img src={`http://localhost:5000${img.url}`} alt={`Design ${index + 1}`} className="w-full h-full object-cover" />
+                                        <img src={getImageUrl(img.url)} alt={`Design ${index + 1}`} className="w-full h-full object-cover" />
                                         <button
                                             onClick={() => removeImage(index)}
                                             className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -286,11 +311,11 @@ const CustomizationSection = ({ product, onAddToCart }: CustomizationSectionProp
                                     <div className="flex items-center gap-4">
                                         <img
                                             src={selectedDesign.image}
-                                            alt={selectedDesign.name}
+                                            alt={getLocalizedName(selectedDesign.name)}
                                             className="w-24 h-24 object-cover rounded-lg"
                                         />
                                         <div className="flex-1">
-                                            <h4 className="font-bold text-gray-900 dark:text-white">{selectedDesign.name}</h4>
+                                            <h4 className="font-bold text-gray-900 dark:text-white">{getLocalizedName(selectedDesign.name)}</h4>
                                             <p className="text-sm text-gray-500 mt-1">{selectedDesign.description}</p>
                                             <p className="text-lg font-bold text-purple-600 mt-2">+{selectedDesign.price} EGP</p>
                                         </div>

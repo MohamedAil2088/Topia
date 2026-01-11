@@ -40,8 +40,38 @@ exports.createReview = async (req, res) => {
 // @access  Public
 exports.getProductReviews = async (req, res) => {
     try {
-        const reviews = await Review.find({ product: req.params.productId })
-            .populate('user', 'name'); // إظهار اسم صاحب التقييم
+        // Public users only see approved and non-hidden reviews
+        const reviews = await Review.find({
+            product: req.params.productId,
+            approved: true,
+            hidden: false
+        })
+            .populate('user', 'name')
+            .sort({ featured: -1, createdAt: -1 }); // Featured reviews first
+
+        res.json({
+            success: true,
+            count: reviews.length,
+            data: reviews
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Get featured reviews (Public)
+// @route   GET /api/reviews/featured
+// @access  Public
+exports.getFeaturedReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find({
+            featured: true,
+            approved: true,
+            hidden: false
+        })
+            .populate('user', 'name')
+            .limit(3)
+            .sort({ createdAt: -1 });
 
         res.json({
             success: true,
@@ -72,6 +102,116 @@ exports.deleteReview = async (req, res) => {
         await review.deleteOne();
 
         res.json({ success: true, message: 'تم حذف التقييم' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ============= ADMIN FUNCTIONS =============
+
+// @desc    Get all reviews (Admin)
+// @route   GET /api/admin/reviews
+// @access  Private/Admin
+exports.getAllReviews = async (req, res) => {
+    try {
+        const page = Number(req.query.page) || 1;
+        const pageSize = 20;
+        const filter = req.query.filter || 'all'; // all, approved, unapproved, featured, hidden
+
+        let query = {};
+
+        if (filter === 'approved') query.approved = true;
+        if (filter === 'unapproved') query.approved = false;
+        if (filter === 'featured') query.featured = true;
+        if (filter === 'hidden') query.hidden = true;
+
+        const count = await Review.countDocuments(query);
+        const reviews = await Review.find(query)
+            .populate('user', 'name email')
+            .populate('product', 'name images')
+            .sort({ createdAt: -1 })
+            .limit(pageSize)
+            .skip(pageSize * (page - 1));
+
+        res.json({
+            success: true,
+            data: reviews,
+            page,
+            pages: Math.ceil(count / pageSize),
+            total: count
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Approve/Unapprove review
+// @route   PUT /api/admin/reviews/:id/approve
+// @access  Private/Admin
+exports.approveReview = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+        }
+
+        review.approved = req.body.approved !== undefined ? req.body.approved : true;
+        await review.save();
+
+        res.json({
+            success: true,
+            message: review.approved ? 'تم الموافقة على التقييم' : 'تم إلغاء الموافقة',
+            data: review
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Feature/Unfeature review
+// @route   PUT /api/admin/reviews/:id/feature
+// @access  Private/Admin
+exports.featureReview = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+        }
+
+        review.featured = req.body.featured !== undefined ? req.body.featured : !review.featured;
+        await review.save();
+
+        res.json({
+            success: true,
+            message: review.featured ? 'تم تمييز التقييم' : 'تم إلغاء التمييز',
+            data: review
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// @desc    Hide/Unhide review
+// @route   PUT /api/admin/reviews/:id/hide
+// @access  Private/Admin
+exports.hideReview = async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'التقييم غير موجود' });
+        }
+
+        review.hidden = req.body.hidden !== undefined ? req.body.hidden : !review.hidden;
+        await review.save();
+
+        res.json({
+            success: true,
+            message: review.hidden ? 'تم إخفاء التقييم' : 'تم إظهار التقييم',
+            data: review
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

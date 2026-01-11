@@ -4,6 +4,8 @@ import { FiPackage, FiClock, FiCheck, FiX, FiPrinter, FiMapPin, FiTruck, FiChevr
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import { useAppSelector } from '../hooks/useRedux';
+import { getLocalizedName } from '../utils/getLocalizedName';
+import { getImageUrl } from '../utils/imageUtils';
 
 const CustomOrderDetailsPage = () => {
     const { id } = useParams();
@@ -75,10 +77,10 @@ const CustomOrderDetailsPage = () => {
                             </h2>
                             <div className="flex gap-6">
                                 <div className="w-32 h-32 bg-gray-50 rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
-                                    <img src={order.product?.images[0]} alt={order.product?.name} className="w-full h-full object-cover" />
+                                    <img src={getImageUrl(order.product?.images[0])} alt={getLocalizedName(order.product?.name)} className="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{order.product?.name}</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{getLocalizedName(order.product?.name)}</h3>
                                     <div className="space-y-1 text-sm text-gray-600">
                                         <p><span className="font-semibold">Size:</span> {order.size}</p>
                                         <p><span className="font-semibold">Color:</span> {order.color}</p>
@@ -110,8 +112,8 @@ const CustomOrderDetailsPage = () => {
                                     <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Uploaded Designs</p>
                                     <div className="flex gap-4 overflow-x-auto pb-2">
                                         {order.customization.designImages.map((img: any, idx: number) => (
-                                            <a key={idx} href={`http://localhost:5000${img.url}`} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
-                                                <img src={`http://localhost:5000${img.url}`} alt="Design" className="w-full h-full object-cover" />
+                                            <a key={idx} href={getImageUrl(img.url)} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all">
+                                                <img src={getImageUrl(img.url)} alt="Design" className="w-full h-full object-cover" />
                                             </a>
                                         ))}
                                     </div>

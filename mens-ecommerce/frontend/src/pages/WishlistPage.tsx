@@ -3,9 +3,13 @@ import { removeFromWishlist } from '../redux/slices/wishlistSlice';
 import { addToCart } from '../redux/slices/cartSlice';
 import { Link } from 'react-router-dom';
 import { FiTrash2, FiShoppingBag, FiHeart } from 'react-icons/fi';
+import { useTranslation } from 'react-i18next';
 import Swal from 'sweetalert2';
+import { getLocalizedName } from '../utils/getLocalizedName';
+import { getImageUrl } from '../utils/imageUtils';
 
 const WishlistPage: React.FC = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { items } = useAppSelector((state) => state.wishlist);
 
@@ -14,7 +18,7 @@ const WishlistPage: React.FC = () => {
 
         Swal.fire({
             icon: 'info',
-            title: 'Removed from Wishlist',
+            title: t('wishlist.removedFromWishlist', 'Removed from Wishlist'),
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
@@ -25,7 +29,7 @@ const WishlistPage: React.FC = () => {
     const handleMoveToCart = (product: any) => {
         dispatch(addToCart({
             _id: product._id,
-            name: product.name,
+            name: getLocalizedName(product.name),
             price: product.price,
             image: product.images[0],
             stock: product.stock,
@@ -51,9 +55,9 @@ const WishlistPage: React.FC = () => {
                 </div>
                 <div>
                     <h1 className="text-3xl font-bold font-display text-gray-900">
-                        💝 My <span className="bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">Wishlist</span>
+                        💝 {t('wishlist.title')}
                     </h1>
-                    <p className="text-gray-500">You have {items.length} items saved in your collection.</p>
+                    <p className="text-gray-500">{t('wishlist.empty')}</p>
                 </div>
             </div>
 
@@ -62,20 +66,20 @@ const WishlistPage: React.FC = () => {
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
                         <FiHeart size={40} />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Your wishlist is empty</h2>
-                    <p className="text-gray-500 mb-8 max-w-md mx-auto">Explore our premium collection and save the items you love for later.</p>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('wishlist.emptyTitle', 'Your wishlist is empty')}</h2>
+                    <p className="text-gray-500 mb-8 max-w-md mx-auto">{t('wishlist.emptySubset', 'Explore our premium collection and save the items you love for later.')}</p>
                     <Link to="/shop" className="inline-flex items-center gap-2 bg-primary-900 text-white px-10 py-4 rounded-xl font-bold hover:bg-black transition-all shadow-xl shadow-gray-200">
-                        Start Shopping <FiShoppingBag />
+                        {t('cart.continueShopping')} <FiShoppingBag />
                     </Link>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {items.map((item) => (
-                        <div key={item._id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                            <div className="relative aspect-[4/5] overflow-hidden">
+                        <div key={item._id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+                            <div className="relative aspect-[4/5] overflow-hidden shrink-0">
                                 <img
-                                    src={item.images[0]}
-                                    alt={item.name}
+                                    src={getImageUrl(item.images[0])}
+                                    alt={getLocalizedName(item.name)}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <button
@@ -87,23 +91,25 @@ const WishlistPage: React.FC = () => {
                                 </button>
                             </div>
 
-                            <div className="p-6">
+                            <div className="p-6 flex flex-col flex-1">
                                 <Link to={`/product/${item._id}`}>
-                                    <h3 className="font-bold text-xl text-gray-900 mb-1 group-hover:text-primary-600 transition-colors uppercase tracking-tight">{item.name}</h3>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-1 group-hover:text-primary-600 transition-colors uppercase tracking-tight line-clamp-2 h-14" title={getLocalizedName(item.name)}>
+                                        {getLocalizedName(item.name)}
+                                    </h3>
                                 </Link>
                                 <div className="flex items-center justify-between mb-6">
                                     <span className="text-2xl font-black text-primary-900">{item.price} EGP</span>
                                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${item.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {item.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                                        {item.stock > 0 ? t('product.inStock') : t('product.outOfStock')}
                                     </span>
                                 </div>
 
                                 <button
                                     onClick={() => handleMoveToCart(item)}
                                     disabled={item.stock === 0}
-                                    className="w-full flex items-center justify-center gap-3 bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-lg shadow-gray-200"
+                                    className="w-full mt-auto flex items-center justify-center gap-3 bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-lg shadow-gray-200"
                                 >
-                                    <FiShoppingBag size={20} /> Move To Cart
+                                    <FiShoppingBag size={20} /> {t('wishlist.moveToCart')}
                                 </button>
                             </div>
                         </div>

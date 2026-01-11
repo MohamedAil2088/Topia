@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: topia-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-topia_ecommerce}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./backups:/backups
+    ports:
+      - "27017:27017"
+    networks:
+      - topia-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      target: ${NODE_ENV:-production}
+    container_name: topia-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/${MONGO_DB_NAME:-topia_ecommerce}?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - topia-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_uploads:/app/uploads
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      target: ${NODE_ENV:-production}
+    container_name: topia-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+    networks:
+      - topia-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
+
+  # MongoDB Backup Service
+  mongodb-backup:
+    image: mongo:7.0
+    container_name: topia-mongodb-backup
+    restart: unless-stopped
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_USER: ${MONGO_ROOT_USER:-admin}
+      MONGO_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_DB: ${MONGO_DB_NAME:-topia_ecommerce}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+    volumes:
+      - ./backups:/backups
+      - ./scripts:/scripts
+    networks:
+      - topia-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: >
+      sh -c " while true; do
+        echo 'Running MongoDB backup...'
+        mongodump --host=mongodb --port=27017 \
+          --username=${MONGO_ROOT_USER:-admin} \
+          --password=${MONGO_ROOT_PASSWORD:-password123} \
+          --authenticationDatabase=admin \
+          --db=${MONGO_DB_NAME:-topia_ecommerce} \
+          --out=/backups/backup-$(date +%Y%m%d-%H%M%S)
+        
+        echo 'Removing backups older than ${BACKUP_RETENTION_DAYS:-7} days...'
+        find /backups -type d -mtime +${BACKUP_RETENTION_DAYS:-7} -exec rm -rf {} +
+        
+        echo 'Backup completed. Sleeping for 24 hours...'
+        sleep 86400
+      done "
+
+networks:
+  topia-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  backend_uploads:
+    driver: local

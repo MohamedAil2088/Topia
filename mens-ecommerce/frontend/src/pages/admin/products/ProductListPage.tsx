@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next'; // Import i18n
 import { useAppDispatch, useAppSelector } from '../../../hooks/useRedux';
 import { fetchProducts } from '../../../redux/slices/productSlice';
 import Button from '../../../components/Button';
@@ -8,10 +9,12 @@ import { FiEdit, FiPlus, FiTrash2, FiSearch, FiPackage, FiDollarSign, FiAlertCir
 import api from '../../../utils/api';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { getImageUrl } from '../../../utils/imageUtils';
 
 const MySwal = withReactContent(Swal);
 
 const ProductListPage = () => {
+    const { t, i18n } = useTranslation(); // Use hook
     const dispatch = useAppDispatch();
     const { products, loading: reduxLoading, error } = useAppSelector((state) => state.products);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -22,10 +25,25 @@ const ProductListPage = () => {
         dispatch(fetchProducts({}));
     }, [dispatch]);
 
+    // Helper to get translated name safely
+    const getName = (name: any) => {
+        if (!name) return 'Product';
+        if (typeof name === 'string') return name;
+        return name[i18n.language] || name.en || Object.values(name)[0] || 'Product';
+    };
+
+
+
     // Filter products based on search and stock filter
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
-            const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+            // Updated search logic to handle multilingual names
+            const nameToSearch = typeof product.name === 'string'
+                ? product.name
+                : Object.values(product.name).join(' ');
+
+            const matchesSearch = nameToSearch.toLowerCase().includes(searchTerm.toLowerCase());
+
             const matchesStock = stockFilter === 'all'
                 || (stockFilter === 'in-stock' && product.stock > 0)
                 || (stockFilter === 'out-of-stock' && product.stock === 0);
@@ -42,9 +60,10 @@ const ProductListPage = () => {
         return { total, inStock, outOfStock, totalValue };
     }, [products]);
 
-    const handleDelete = async (id: string, name: string) => {
+    const handleDelete = async (id: string, name: any) => {
+        const displayName = getName(name);
         const result = await MySwal.fire({
-            title: `Delete "${name}"?`,
+            title: `Delete "${displayName}"?`,
             text: "This action cannot be undone!",
             icon: 'warning',
             showCancelButton: true,
@@ -69,8 +88,11 @@ const ProductListPage = () => {
 
     return (
         <div className="space-y-6">
+            {/* ... (Header and Filters omitted for brevity as they don't use name directly except search input which is fine) ... */}
+
             {/* Header with Stats */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                {/* ... existing header logic ... */}
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-3xl font-black font-display text-gray-900 mb-1">Products Management</h1>
@@ -153,8 +175,8 @@ const ProductListPage = () => {
                         <button
                             onClick={() => setStockFilter('all')}
                             className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${stockFilter === 'all'
-                                    ? 'bg-primary-900 text-white shadow-lg'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-primary-900 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             All
@@ -162,8 +184,8 @@ const ProductListPage = () => {
                         <button
                             onClick={() => setStockFilter('in-stock')}
                             className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${stockFilter === 'in-stock'
-                                    ? 'bg-green-500 text-white shadow-lg'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-green-500 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             In Stock
@@ -171,8 +193,8 @@ const ProductListPage = () => {
                         <button
                             onClick={() => setStockFilter('out-of-stock')}
                             className={`px-5 py-3 rounded-xl font-bold text-sm transition-all ${stockFilter === 'out-of-stock'
-                                    ? 'bg-red-500 text-white shadow-lg'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-red-500 text-white shadow-lg'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                 }`}
                         >
                             Out of Stock
@@ -218,13 +240,13 @@ const ProductListPage = () => {
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200 group-hover:border-primary-300 transition-all shadow-sm group-hover:shadow-lg">
                                                         <img
-                                                            src={product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/64'}
-                                                            alt={product.name}
+                                                            src={product.images && product.images.length > 0 ? getImageUrl(product.images[0]) : 'https://via.placeholder.com/64'}
+                                                            alt={getName(product.name)}
                                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                                         />
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors">{product.name}</p>
+                                                        <p className="font-bold text-gray-900 group-hover:text-primary-900 transition-colors">{getName(product.name)}</p>
                                                         <p className="text-xs text-gray-500 mt-1">ID: {product._id.slice(-8).toUpperCase()}</p>
                                                     </div>
                                                 </div>
@@ -234,13 +256,13 @@ const ProductListPage = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold border border-blue-200">
-                                                    {product.category?.name || 'Uncategorized'}
+                                                    {getName(product.category?.name) || 'Uncategorized'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1.5 rounded-lg text-xs font-black border-2 ${product.stock > 0
-                                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                                        : 'bg-red-50 text-red-700 border-red-200'
+                                                    ? 'bg-green-50 text-green-700 border-green-200'
+                                                    : 'bg-red-50 text-red-700 border-red-200'
                                                     }`}>
                                                     {product.stock > 0 ? `${product.stock} in stock` : 'Out of Stock'}
                                                 </span>

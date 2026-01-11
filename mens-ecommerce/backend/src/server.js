@@ -13,6 +13,9 @@ const app = express();
 // تحميل متغيرات البيئة
 dotenv.config();
 
+// Force Vercel Redeploy - Timestamp: %TIMESTAMP%
+console.log('Server starting... Vercel Fix Deployment');
+
 const connectDB = require('./config/database');
 
 // Sentry Init
@@ -50,7 +53,9 @@ const io = new Server(server, {
       "http://localhost:3000",
       "https://topia-mens.vercel.app",
       "https://topia-store-two.vercel.app",
-      /^https:\/\/topia-store-.*\.vercel\.app$/
+      "https://topia-front-v2.vercel.app",
+      /^https:\/\/topia-.*\.vercel\.app$/,
+      /^https:\/\/topia-front-v2-.*\.vercel\.app$/
     ],
     methods: ["GET", "POST"]
   }
@@ -74,7 +79,9 @@ app.use(cors({
     "http://localhost:3000",
     "https://topia-mens.vercel.app",
     "https://topia-store-two.vercel.app",
-    /^https:\/\/topia-store-.*\.vercel\.app$/
+    "https://topia-front-v2.vercel.app",
+    /^https:\/\/topia-.*\.vercel\.app$/,
+    /^https:\/\/topia-front-v2-.*\.vercel\.app$/
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -137,6 +144,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/admin/reviews', require('./routes/adminReviewRoutes')); // Admin Review Management
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/coupons', require('./routes/couponRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
@@ -148,9 +156,13 @@ app.use('/api/custom-orders', require('./routes/customOrderRoutes')); // Custom 
 app.use('/api/designs', require('./routes/designRoutes')); // Design Templates Route
 app.use('/api/settings', require('./routes/settingRoutes')); // Store Settings Route
 
-// جعل مجلد uploads عاماً (Static)
-const uploadsPath = path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsPath));
+
+// جعل مجلد uploads عاماً (Static) - فقط في البيئة المحلية
+const isServerless = process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+if (!isServerless) {
+  const uploadsPath = path.join(__dirname, '../uploads');
+  app.use('/uploads', express.static(uploadsPath));
+}
 
 // Route أساسي للاختبار
 app.get('/', (req, res) => {

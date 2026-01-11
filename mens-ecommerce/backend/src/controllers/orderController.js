@@ -306,14 +306,28 @@ exports.getMyOrders = async (req, res) => {
             .limit(pageSize)
             .skip(pageSize * (page - 1));
 
+        // Filter out any corrupted orders without _id
+        const validOrders = orders.filter(order => {
+            if (!order._id) {
+                console.error('⚠️ Found order without _id:', JSON.stringify(order));
+                return false;
+            }
+            return true;
+        });
+
+        if (validOrders.length !== orders.length) {
+            console.warn(`⚠️ Filtered out ${orders.length - validOrders.length} corrupted orders`);
+        }
+
         res.json({
             success: true,
-            data: orders,
+            data: validOrders,
             page,
             pages: Math.ceil(count / pageSize),
             total: count
         });
     } catch (error) {
+        console.error('❌ Error in getMyOrders:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
