@@ -1,5 +1,12 @@
-export const getImageUrl = (url: string | undefined | null): string => {
+export const getImageUrl = (url: any): string => {
     if (!url) return '';
+
+    // Handle if url is an object
+    if (typeof url === 'object' && url.url) {
+        url = url.url;
+    }
+
+    if (typeof url !== 'string') return '';
     if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('blob:')) {
         return url;
     }
